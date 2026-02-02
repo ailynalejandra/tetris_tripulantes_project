@@ -98,6 +98,8 @@ def run_game(screen):
     # --------------------
     secret_image_path = os.path.join(IMAGE_DIR, "secret.png")
     secret_image = pygame.image.load(secret_image_path) if os.path.exists(secret_image_path) else None
+    premio_path = os.path.join(IMAGE_DIR, "premio.png")
+    premio_image = pygame.image.load(premio_path) if os.path.exists(premio_path) else None
     musica_secreta = os.path.join(SOUND_DIR, "secret_music.mp3")
 
     KONAMI_CODE = [
@@ -120,31 +122,107 @@ def run_game(screen):
                 print("❌ Error al reproducir música:", e)
 
     def ejecutar_easter_egg():
-        """Pantalla independiente para el Easter Egg. Devuelve 'quit' o 'resume'."""
+        """Pantalla independiente para el Easter Egg con dos fases y contador de F que desbloquea imagen."""
         poner_musica(musica_secreta)
         colors_cycle = itertools.cycle([(255,0,0), (0,255,0), (0,0,255), (255,255,0)])
         font_grande = pygame.font.Font(None, 60)
+        font_mediana = pygame.font.Font(None, 36)
+        font_pequena = pygame.font.Font(None, 28)
+
+        inicio = pygame.time.get_ticks()
+        fase = 1  # 1 = intro de 5 segundos, 2 = mensaje especial
+        f_counter = 0  # contador de veces que se presiona F
+        mostrar_premio = False
+
+        # Si queremos que la imagen especial desaparezca tras unos segundos, podemos usar timer_premio
+        timer_premio_inicio = None
+        DURACION_PREMIO_MS = 5000  # si quieres que el premio se muestre solo 5s; si quieres que quede fija, ignora timers
 
         while True:
             screen.fill(NEGRO)
-            # Imagen secreta centrada si existe
-            if secret_image:
-                rect = secret_image.get_rect(center=(screen.get_width()//2, screen.get_height()//2))
-                screen.blit(secret_image, rect)
 
-            txt = font_grande.render("¡SECRET MODE!", True, next(colors_cycle))
-            screen.blit(txt, (screen.get_width()//2 - txt.get_width()//2, 50))
+            if fase == 1:
+                # Imagen secreta y texto dinámico
+                if secret_image:
+                    rect = secret_image.get_rect(center=(screen.get_width()//2, screen.get_height()//2))
+                    screen.blit(secret_image, rect)
 
-            hint = font.render("Presiona ESC para volver", True, BLANCO)
-            screen.blit(hint, (screen.get_width()//2 - hint.get_width()//2, screen.get_height()-50))
+                txt = font_grande.render("¡SECRET MODE!", True, next(colors_cycle))
+                screen.blit(txt, (screen.get_width()//2 - txt.get_width()//2, 50))
+
+                hint = font_mediana.render("Presiona ESC para volver", True, BLANCO)
+                screen.blit(hint, (screen.get_width()//2 - hint.get_width()//2, screen.get_height()-50))
+
+                # Pasar a fase 2 después de 5 segundos
+                if pygame.time.get_ticks() - inicio > 5000:
+                    fase = 2
+
+            elif fase == 2:
+                # Mensaje especial
+                mensaje = [
+                    "Bien hecho, lo has logrado.",
+                    "Descubriste el misterio secreto dejado por los desarrolladores.",
+                    "Te has ganado el premio por la curiosidad.",
+                    "Este proyecto nos enorgullece enormemente y que tú estés aquí",
+                    "jugándolo y disfrutándolo nos da una gran felicidad.",
+                    "Muchas gracias y de parte del grupo Los Tripulantes nos despedimos.",
+                    "",
+                    "Press F to pay respect"
+                ]
+
+                y = 80
+                for linea in mensaje:
+                    txt = font_mediana.render(linea, True, BLANCO)
+                    screen.blit(txt, (screen.get_width()//2 - txt.get_width()//2, y))
+                    y += 36
+
+                # Mostrar contador de F en pantalla
+                contador_txt = font_pequena.render(f"Respectos: {f_counter}/10", True, (200,200,200))
+                screen.blit(contador_txt, (screen.get_width()//2 - contador_txt.get_width()//2, y + 10))
+
+                # Si se presionó F 10 veces, mostrar imagen especial
+                if mostrar_premio and premio_image:
+                    rect = premio_image.get_rect(center=(screen.get_width()//2, screen.get_height()//2 + 40))
+                    screen.blit(premio_image, rect)
+
+                    # Si usamos timer para que el premio desaparezca tras X ms:
+                    if timer_premio_inicio is None:
+                        timer_premio_inicio = pygame.time.get_ticks()
+                    else:
+                        if pygame.time.get_ticks() - timer_premio_inicio > DURACION_PREMIO_MS:
+                            # Ocultar premio después de la duración (si prefieres que quede fija, comenta estas líneas)
+                            mostrar_premio = False
+                            timer_premio_inicio = None
 
             pygame.display.flip()
+
+            # Eventos
             for ev in pygame.event.get():
                 if ev.type == pygame.QUIT:
-                    return "quit"
-                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                     poner_musica(tetris_theme)
-                    return "resume"
+                    return "quit"
+                if ev.type == pygame.KEYDOWN:
+                    # En cualquier fase ESC vuelve al juego
+                    if ev.key == pygame.K_ESCAPE:
+                        poner_musica(tetris_theme)
+                        return "resume"
+
+                    if fase == 1:
+                        # permitir saltar la intro con ESC (ya manejado) o con F si quieres
+                        continue
+
+                    if fase == 2:
+                        if ev.key == pygame.K_f:
+                            f_counter += 1
+                            print(f"Respect paid ({f_counter}/10)")
+                            # efecto visual breve: si quieres reproducir un sonido, puedes hacerlo aquí
+                            if f_counter >= 10:
+                                mostrar_premio = True
+                                timer_premio_inicio = None  # reiniciar timer para mostrar premio
+                                print("🎉 Imagen especial desbloqueada")
+                            else:
+                                print("No se pudo cargar premio.png")
+                        # permitir otras teclas en fase 2 (por ejemplo volver con ESC ya manejado)
 
     # --------------------
     # Fuente
@@ -239,6 +317,7 @@ def run_game(screen):
                     res = ejecutar_easter_egg()
                     if res == "quit":
                         return "quit"
+                    # al volver, la música ya fue restaurada por ejecutar_easter_egg
                     input_seq.clear()  # limpiar secuencia tras usar el easter egg
 
                 # Pausa
