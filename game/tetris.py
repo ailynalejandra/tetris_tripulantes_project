@@ -3,6 +3,7 @@ import random
 import os
 import itertools
 
+__version__ = "0.1.0"
 def run_game(screen):
     # ❗ NO pygame.init() aquí si ya lo haces en main
     # ❗ NO pygame.mixer.init() aquí si ya lo haces en main
