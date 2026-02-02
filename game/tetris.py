@@ -1,11 +1,11 @@
 import pygame
 import random
 import os
+import itertools
 
 def run_game(screen):
     # ❗ NO pygame.init() aquí si ya lo haces en main
     # ❗ NO pygame.mixer.init() aquí si ya lo haces en main
-    # (si no lo haces en main, puedes activarlos, pero recomiendo hacerlo en main)
 
     # --------------------
     # Configuración tablero
@@ -45,25 +45,17 @@ def run_game(screen):
         [[1, 1, 0], [0, 1, 1]],    # S
         [[0, 1, 1], [1, 1, 0]]     # Z
     ]
-    
-
 
     # --------------------
     # RUTAS (carpeta raíz)
     # --------------------
-    # tetris.py está en /game, por eso subimos un nivel
     BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # ← raíz del proyecto
     SOUND_DIR = os.path.join(BASE_DIR, "sounds")
-
-    # Debug útil:
-    # print("BASE_DIR:", BASE_DIR)
-    # print("SOUND_DIR:", SOUND_DIR)
+    IMAGE_DIR = os.path.join(BASE_DIR, "images")
 
     # --------------------
     # Audio
     # --------------------
-    
-
     def load_sound(filename):
         path = os.path.join(SOUND_DIR, filename)
         if not os.path.exists(path):
@@ -76,7 +68,6 @@ def run_game(screen):
             return None
 
     # Música de fondo
-    
     tetris_theme = os.path.join(SOUND_DIR, "tetris_theme.mp3")
     if os.path.exists(tetris_theme):
         try:
@@ -103,12 +94,65 @@ def run_game(screen):
             s.set_volume(0.5)
 
     # --------------------
+    # Recursos Easter Egg
+    # --------------------
+    secret_image_path = os.path.join(IMAGE_DIR, "secret.png")
+    secret_image = pygame.image.load(secret_image_path) if os.path.exists(secret_image_path) else None
+    musica_secreta = os.path.join(SOUND_DIR, "secret_music.mp3")
+
+    KONAMI_CODE = [
+        pygame.K_UP, pygame.K_UP,
+        pygame.K_DOWN, pygame.K_DOWN,
+        pygame.K_LEFT, pygame.K_RIGHT,
+        pygame.K_LEFT, pygame.K_RIGHT,
+        pygame.K_b, pygame.K_a
+    ]
+    input_seq = []
+
+    def poner_musica(ruta):
+        if os.path.exists(ruta):
+            try:
+                pygame.mixer.music.stop()
+                pygame.mixer.music.load(ruta)
+                pygame.mixer.music.set_volume(0.4)
+                pygame.mixer.music.play(-1)
+            except Exception as e:
+                print("❌ Error al reproducir música:", e)
+
+    def ejecutar_easter_egg():
+        """Pantalla independiente para el Easter Egg. Devuelve 'quit' o 'resume'."""
+        poner_musica(musica_secreta)
+        colors_cycle = itertools.cycle([(255,0,0), (0,255,0), (0,0,255), (255,255,0)])
+        font_grande = pygame.font.Font(None, 60)
+
+        while True:
+            screen.fill(NEGRO)
+            # Imagen secreta centrada si existe
+            if secret_image:
+                rect = secret_image.get_rect(center=(screen.get_width()//2, screen.get_height()//2))
+                screen.blit(secret_image, rect)
+
+            txt = font_grande.render("¡SECRET MODE!", True, next(colors_cycle))
+            screen.blit(txt, (screen.get_width()//2 - txt.get_width()//2, 50))
+
+            hint = font.render("Presiona ESC para volver", True, BLANCO)
+            screen.blit(hint, (screen.get_width()//2 - hint.get_width()//2, screen.get_height()-50))
+
+            pygame.display.flip()
+            for ev in pygame.event.get():
+                if ev.type == pygame.QUIT:
+                    return "quit"
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+                    poner_musica(tetris_theme)
+                    return "resume"
+
+    # --------------------
     # Fuente
     # --------------------
     font = pygame.font.Font(None, 36)
 
     # --------------------
-    # Funciones
+    # Funciones de juego
     # --------------------
     def crear_nueva_pieza():
         forma = random.choice(PIEZAS)
@@ -140,7 +184,6 @@ def run_game(screen):
                 if bloque:
                     tablero[pieza["y"] + i][pieza["x"] + j] = pieza["color"]
 
-    # ✅ corregido: elimina SOLO filas completas
     def borrar_lineas(tablero):
         nuevas = []
         lineas_borradas = 0
@@ -174,8 +217,6 @@ def run_game(screen):
     puntaje = 0
     pausa = False
 
-    
-
     # --------------------
     # Bucle principal
     # --------------------
@@ -188,6 +229,18 @@ def run_game(screen):
                 return "quit"
 
             if event.type == pygame.KEYDOWN:
+                # Registrar tecla para Konami
+                input_seq.append(event.key)
+                # mantener input_seq con tamaño máximo razonable
+                if len(input_seq) > len(KONAMI_CODE):
+                    input_seq.pop(0)
+                if input_seq[-len(KONAMI_CODE):] == KONAMI_CODE:
+                    # Ejecutar Easter Egg
+                    res = ejecutar_easter_egg()
+                    if res == "quit":
+                        return "quit"
+                    input_seq.clear()  # limpiar secuencia tras usar el easter egg
+
                 # Pausa
                 if event.key == pygame.K_p:
                     pausa = not pausa
@@ -237,7 +290,7 @@ def run_game(screen):
 
                     tablero, lineas = borrar_lineas(tablero)
 
-                    # ✅ Puntaje SOLO por líneas
+                    # Puntaje por líneas
                     if lineas > 0:
                         if line_clear:
                             line_clear.play()
@@ -307,108 +360,4 @@ def run_game(screen):
     if final_theme:
         final_theme.play()
 
-    # Konami code: define la secuencia y la función de comprobación
-konami_code = [
-    pygame.K_UP, pygame.K_UP,
-    pygame.K_DOWN, pygame.K_DOWN,
-    pygame.K_LEFT, pygame.K_RIGHT,
-    pygame.K_LEFT, pygame.K_RIGHT,
-    pygame.K_b, pygame.K_a
-]
-input_sequence = []
-
-def check_konami(event, screen):
-    """
-    Llamar desde el bucle de eventos: check_konami(event, screen)
-    Cuando se detecta la secuencia completa llama a activar_easter_egg(screen).
-    """
-    if event.type == pygame.KEYDOWN:
-        input_sequence.append(event.key)
-        if len(input_sequence) > len(konami_code):
-            input_sequence.pop(0)
-        if input_sequence == konami_code:
-            input_sequence.clear()
-            activar_easter_egg(screen)
-
-import pygame
-import itertools
-
-pygame.init()
-WIDTH, HEIGHT = 640, 480
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Konami Code Easter Egg")
-
-# --- Recursos ---
-font = pygame.font.SysFont("Arial", 40, bold=True)
-colors_cycle = itertools.cycle([(255,0,0), (0,255,0), (0,0,255), (255,255,0)])
-image = pygame.image.load("images/secret.png")
-image_rect = image.get_rect(center=(WIDTH//2, HEIGHT//2))
-pygame.mixer.music.load("sounds/secret_music.mp3")
-
-# --- Estado ---
-easter_active = False
-clock = pygame.time.Clock()
-
-# --- Función del Easter Egg ---
-def activar_easter_egg(screen):
-    global easter_active
-    easter_active = True
-    if not pygame.mixer.music.get_busy():
-        pygame.mixer.music.play()
-
-def desactivar_easter_egg():
-    global easter_active
-    easter_active = False
-    pygame.mixer.music.stop()
-
-# --- Konami Code ---
-konami_code = [
-    pygame.K_UP, pygame.K_UP,
-    pygame.K_DOWN, pygame.K_DOWN,
-    pygame.K_LEFT, pygame.K_RIGHT,
-    pygame.K_LEFT, pygame.K_RIGHT,
-    pygame.K_b, pygame.K_a
-]
-input_sequence = []
-
-def check_konami(event, screen):
-    global input_sequence
-    if event.type == pygame.KEYDOWN:
-        input_sequence.append(event.key)
-        if len(input_sequence) > len(konami_code):
-            input_sequence.pop(0)
-        if input_sequence == konami_code:
-            input_sequence.clear()
-            activar_easter_egg(screen)
-
-# --- Bucle principal ---
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        check_konami(event,screen)
-
-        # Tecla ESC para desactivar
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            desactivar_easter_egg()
-
-    screen.fill((0,0,0))
-
-    if easter_active:
-        # Imagen centrada
-        screen.blit(image, image_rect)
-
-        # Texto dinámico
-        color = next(colors_cycle)
-        text = font.render("¡Easter Egg Activado!", True, color)
-        text_rect = text.get_rect(center=(WIDTH//2, HEIGHT//2 + 150))
-        screen.blit(text, text_rect)
- 
-
-    pygame.display.flip()
-    clock.tick(30)
-
-pygame.quit()
-    
-    
+    return "gameover"
