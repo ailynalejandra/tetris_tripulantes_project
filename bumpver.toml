@@ -14,7 +14,7 @@ push = true
 "bumpver.toml" = [
     'current_version = "{version}"',
 ]
-"tetris.py" =[ 
-    '__version__ = "{version}"'
+"version.py" =[ 
+    'current_version = "{version}"'
 ]
 
