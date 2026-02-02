@@ -205,8 +205,8 @@ def show_credits():
         "referencias solo para basados",
         "en la verdadera cultura",
         "Gracias por jugar!",
-        "Eres fuerte, pero",
-        "CRISTO lo es MAS!"
+        "ERES FUERTE, PERO!",
+        "CRISTO LO ES MAS!!!"
     ]
 
     reloj = pygame.time.Clock()
@@ -248,7 +248,7 @@ def show_credits():
                 screen.blit(imagen_final, (WIDTH//2 - imagen_final.get_width()//2,
                                            desplazamiento + len(creditos)*50))
 
-            desplazamiento -= 1
+            desplazamiento -= 0.5 #ajustar velocidad de los creditos 
 
             # Cuando todo salió por arriba (texto + imagen)
             if desplazamiento < -(len(creditos)*50 + (imagen_final.get_height() if imagen_final else 0)):
@@ -260,7 +260,7 @@ def show_credits():
                       "se despiden",
                       "los tripulantes",
                       "GAME",
-                      "te falta odio pa"]
+                      "te falta odio "]
             for i, linea in enumerate(lineas):
                 texto = font_final.render(linea, True, WHITE)
                 rect_texto = texto.get_rect(center=(WIDTH//2, HEIGHT//2 - 150 + i*50))

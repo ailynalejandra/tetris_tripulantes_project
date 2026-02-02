@@ -40,8 +40,10 @@ def game_over_menu(screen):
 
     # Música Game Over
     if os.path.exists(gameover_theme_path):
+        
         pygame.mixer.music.load(gameover_theme_path)
         pygame.mixer.music.play(0)
+        pygame.mixer.music.set_volume(0.3)
 
     screamer_sound = None
     if os.path.exists(screamer_sound_path):
