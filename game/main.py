@@ -3,7 +3,7 @@ import sys
 import os
 from game import menu
 from game import tetris
-
+from game.settings import GameSettings
 # --------------------
 # Inicialización
 # --------------------
@@ -14,12 +14,9 @@ except pygame.error:
     print("Audio no disponible")
 
 WIDTH, HEIGHT = 330, 660
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((GameSettings.WIDTH, GameSettings.HEIGHT))
 pygame.display.set_caption("Menú Principal - Tetris")
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-BLUE  = (0, 100, 255)
 font_title = pygame.font.Font(None, 48)
 font_text  = pygame.font.Font(None, 22)
 font_creditos =pygame.font.Font(None, 22)
@@ -35,13 +32,13 @@ def draw_text(text, font, color, surface, x, y):
 def show_instructions():
     running = True
     while running:
-        screen.fill(BLACK)
-        draw_text("INSTRUCCIONES", font_title, WHITE, screen, WIDTH//2, 80)
-        draw_text("[LEFT]/[RIGHT] : mover pieza", font_text, WHITE, screen, WIDTH//2, 120)
-        draw_text("[UP] : rotar pieza", font_text, WHITE, screen, WIDTH//2, 160)
-        draw_text("[DOWN] : bajar pieza rápido", font_text, WHITE, screen, WIDTH//2, 200)
-        draw_text("P : Pausa", font_text, WHITE, screen, WIDTH//2, 240)
-        draw_text("ESC : Volver al menú", font_text, WHITE, screen, WIDTH//2, 280)
+        screen.fill(GameSettings.BLACK)
+        draw_text("INSTRUCCIONES", font_title, GameSettings.WHITE, screen, WIDTH//2, 80)
+        draw_text("[LEFT]/[RIGHT] : mover pieza", font_text, GameSettings.WHITE, screen, WIDTH//2, 120)
+        draw_text("[UP] : rotar pieza", font_text, GameSettings.WHITE, screen, WIDTH//2, 160)
+        draw_text("[DOWN] : bajar pieza rápido", font_text, GameSettings.WHITE, screen, WIDTH//2, 200)
+        draw_text("P : Pausa", font_text, GameSettings.WHITE, screen, WIDTH//2, 240)
+        draw_text("ESC : Volver al menú", font_text, GameSettings.WHITE, screen, WIDTH//2, 280)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -113,23 +110,23 @@ def main_menu():
     play_menu_music()
 
     while True:
-        screen.fill(BLACK)
-        draw_text("TETRIS", font_title, WHITE, screen, WIDTH//2, 80)
+        screen.fill(GameSettings.BLACK)
+        draw_text("TETRIS", font_title, GameSettings.WHITE, screen, WIDTH//2, 80)
 
         start_button   = pygame.Rect(65, 150, 200, 60)
         instr_button   = pygame.Rect(65, 250, 200, 60)
         credits_button = pygame.Rect(65, 350, 200, 60)
         exit_button    = pygame.Rect(65, 450, 200, 60)
 
-        pygame.draw.rect(screen, BLUE, start_button)
-        pygame.draw.rect(screen, BLUE, instr_button)
-        pygame.draw.rect(screen, BLUE, credits_button)
-        pygame.draw.rect(screen, BLUE, exit_button)
+        pygame.draw.rect(screen, GameSettings.BLUE, start_button)
+        pygame.draw.rect(screen, GameSettings.BLUE, instr_button)
+        pygame.draw.rect(screen, GameSettings.BLUE, credits_button)
+        pygame.draw.rect(screen, GameSettings.BLUE, exit_button)
 
-        draw_text("Iniciar Juego", font_title, WHITE, screen, WIDTH//2, 180)
-        draw_text("Instrucciones", font_title, WHITE, screen, WIDTH//2, 280)
-        draw_text("Créditos", font_title, WHITE, screen, WIDTH//2, 380)
-        draw_text("Salir", font_title, WHITE, screen, WIDTH//2, 480)
+        draw_text("Iniciar Juego", font_title, GameSettings.WHITE, screen, WIDTH//2, 180)
+        draw_text("Instrucciones", font_title, GameSettings.WHITE, screen, WIDTH//2, 280)
+        draw_text("Créditos", font_title, GameSettings.WHITE, screen, WIDTH//2, 380)
+        draw_text("Salir", font_title, GameSettings.WHITE, screen, WIDTH//2, 480)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -235,12 +232,12 @@ def show_credits():
         imagen_estatica = None
 
     while running:
-        screen.fill(BLACK)
+        screen.fill(GameSettings.BLACK)
 
         if not mostrar_final:
             # Dibujar cada línea de créditos subiendo
             for i, linea in enumerate(creditos):
-                texto = font_creditos.render(linea, True, WHITE)
+                texto = font_creditos.render(linea, True, GameSettings.WHITE)
                 screen.blit(texto, (WIDTH//2 - texto.get_width()//2, desplazamiento + i*50))
 
             # Dibujar la imagen como si fuera la última "línea"
@@ -262,7 +259,7 @@ def show_credits():
                       "GAME",
                       "te falta odio "]
             for i, linea in enumerate(lineas):
-                texto = font_final.render(linea, True, WHITE)
+                texto = font_final.render(linea, True, GameSettings.WHITE)
                 rect_texto = texto.get_rect(center=(WIDTH//2, HEIGHT//2 - 150 + i*50))
                 screen.blit(texto, rect_texto)
 

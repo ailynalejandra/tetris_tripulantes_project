@@ -5,16 +5,10 @@ import itertools
 
 __version__ = "0.1.0"
 def run_game(screen):
-    # ❗ NO pygame.init() aquí si ya lo haces en main
-    # ❗ NO pygame.mixer.init() aquí si ya lo haces en main
-
-    # --------------------
-    # Configuración tablero
-    # --------------------
+    
     tam_bloque = 30
     columnas = 11
     filas = 20
-
     MARGEN_SUPERIOR = 60
 
     pygame.display.set_caption("Tetris")
@@ -162,12 +156,16 @@ def run_game(screen):
                 # Mensaje especial
                 mensaje = [
                     "Bien hecho, lo has logrado.",
-                    "Descubriste el misterio secreto dejado por los desarrolladores.",
-                    "Te has ganado el premio por la curiosidad.",
-                    "Este proyecto nos enorgullece enormemente y que tú estés aquí",
-                    "jugándolo y disfrutándolo nos da una gran felicidad.",
-                    "Muchas gracias y de parte del grupo Los Tripulantes nos despedimos.",
-                    "",
+                    "Descubriste el misterio secreto",
+                    "dejado por los desarrolladores.",
+                    "Te has ganado el premio",
+                    "por la curiosidad.",
+                    "Este proyecto nos enorgullece",
+                    "enormemente y que tú estés aquí",
+                    "jugándolo y disfrutándolo nos",
+                    "da una gran felicidad.",
+                    "Muchas gracias y de parte del",
+                    "grupo Los Tripulantes nos despedimos.",
                     "Press F to pay respect"
                 ]
 
