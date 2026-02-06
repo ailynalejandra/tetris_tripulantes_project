@@ -41,16 +41,16 @@ def run_game(screen):
         [[0, 1, 1], [1, 1, 0]]     # Z
     ]
 
-    # --------------------
+    
     # RUTAS (carpeta raíz)
-    # --------------------
+    
     BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # ← raíz del proyecto
     SOUND_DIR = os.path.join(BASE_DIR, "sounds")
     IMAGE_DIR = os.path.join(BASE_DIR, "images")
 
-    # --------------------
+    
     # Audio
-    # --------------------
+    
     def load_sound(filename):
         path = os.path.join(SOUND_DIR, filename)
         if not os.path.exists(path):
@@ -88,11 +88,11 @@ def run_game(screen):
         if s:
             s.set_volume(0.5)
 
-    # --------------------
+    
     # Recursos Easter Egg
-    # --------------------
+    
     secret_image_path = os.path.join(IMAGE_DIR, "secret.png")
-    secret_image = pygame.image.load(secret_image_path) if os.path.exists(secret_image_path) else None
+    secret_image = pygame.image.load(secret_image_path).convert() if os.path.exists(secret_image_path) else None
     premio_path = os.path.join(IMAGE_DIR, "premio.png")
     premio_image = pygame.image.load(premio_path) if os.path.exists(premio_path) else None
     musica_secreta = os.path.join(SOUND_DIR, "secret_music.mp3")
@@ -132,7 +132,7 @@ def run_game(screen):
         # Si queremos que la imagen especial desaparezca tras unos segundos, podemos usar timer_premio
         timer_premio_inicio = None
         DURACION_PREMIO_MS = 5000  # si quieres que el premio se muestre solo 5s; si quieres que quede fija, ignora timers
-
+        WIDTH, HEIGHT = screen.get_size()
         while True:
             screen.fill(NEGRO)
 
@@ -140,7 +140,9 @@ def run_game(screen):
                 # Imagen secreta y texto dinámico
                 if secret_image:
                     rect = secret_image.get_rect(center=(screen.get_width()//2, screen.get_height()//2))
-                    screen.blit(secret_image, rect)
+                    rect = pygame.transform.scale(secret_image, (WIDTH, HEIGHT))
+                    screen.blit(rect, (0, 0))
+                    
 
                 txt = font_grande.render("¡SECRET MODE!", True, next(colors_cycle))
                 screen.blit(txt, (screen.get_width()//2 - txt.get_width()//2, 50))
@@ -182,7 +184,8 @@ def run_game(screen):
                 # Si se presionó F 10 veces, mostrar imagen especial
                 if mostrar_premio and premio_image:
                     rect = premio_image.get_rect(center=(screen.get_width()//2, screen.get_height()//2 + 40))
-                    screen.blit(premio_image, rect)
+                    rect = pygame.transform.scale(premio_image, (WIDTH, HEIGHT))
+                    screen.blit(rect, (0, 0))
 
                     # Si usamos timer para que el premio desaparezca tras X ms:
                     if timer_premio_inicio is None:
