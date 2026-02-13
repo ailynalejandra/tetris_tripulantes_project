@@ -13,13 +13,50 @@ class ImageManager:
             "credit_final": "final.png",
             "credit_static": "final_static.png",
             "screamer": "screamer.png",
-            # añade más pares name:filename si los necesitas
         }
         if preload:
-            self.load_all_default_images()
+            try:
+                self.load_all_default_images()
+            except Exception as e:
+                print(f"❌ Error en preload de imágenes: {e}")
 
     def _root_path(self, *paths):
         return self.base_dir.joinpath(*paths)
+
+    # --------------------
+    # Utilidades internas
+    # --------------------
+    def _find_file_case_insensitive(self, filename):
+        """
+        Busca un archivo en self.base_dir de forma insensible a mayúsculas.
+        Devuelve Path si lo encuentra, o None.
+        """
+        try:
+            target_lower = filename.lower()
+            if not self.base_dir.exists():
+                return None
+            for p in self.base_dir.iterdir():
+                if p.is_file() and p.name.lower() == target_lower:
+                    return p
+        except Exception:
+            return None
+        return None
+
+    def _try_alternative_extensions(self, stem):
+        """
+        Prueba extensiones comunes si no existe el archivo con la extensión original.
+        Devuelve Path si encuentra alguno, o None.
+        """
+        exts = [".png", ".jpg", ".jpeg", ".webp", ".bmp"]
+        for ext in exts:
+            candidate = self.base_dir.joinpath(stem + ext)
+            if candidate.exists():
+                return candidate
+            # case-insensitive search
+            found = self._find_file_case_insensitive(stem + ext)
+            if found:
+                return found
+        return None
 
     # --------------------
     # Carga y caché
@@ -43,7 +80,24 @@ class ImageManager:
                 self.images[name] = None
                 return None
 
+        # Ruta esperada
         path = self._root_path(filename)
+        print(f"🔎 Intentando cargar imagen: {path}")
+
+        # Si no existe, intentar búsqueda insensible a mayúsculas
+        if not path.exists():
+            alt = self._find_file_case_insensitive(filename)
+            if alt:
+                print(f"ℹ️  Encontrado (case-insensitive): {alt}")
+                path = alt
+            else:
+                # intentar con extensiones alternativas usando el stem
+                stem = Path(filename).stem
+                alt2 = self._try_alternative_extensions(stem)
+                if alt2:
+                    print(f"ℹ️  Encontrado con extensión alternativa: {alt2}")
+                    path = alt2
+
         if not path.exists():
             print(f"❌ No existe imagen: {path}")
             self.images[name] = None
@@ -76,7 +130,11 @@ class ImageManager:
             size_map = {}
         for name, filename in self.default_map.items():
             size = size_map.get(name)
-            self.load_image(name, filename, size=size)
+            try:
+                self.load_image(name, filename, size=size)
+            except Exception as e:
+                print(f"❌ Error precargando {name}: {e}")
+                self.images[name] = None
 
     def get(self, name):
         """Devuelve una imagen ya cargada o None."""
@@ -85,13 +143,13 @@ class ImageManager:
     # --------------------
     # Métodos específicos para tu juego
     # --------------------
-    def load_credit_image(self, size=(300, 200)):
+    def load_credit_image(self, size=(200, 200)):
         return self.load_image("credit_final", None, size=size)
 
-    def load_static_image(self, size=(300, 200)):
+    def load_static_image(self, size=(150, 150)):
         return self.load_image("credit_static", None, size=size)
 
-    def load_screamer_image(self, size=None):
+    def load_screamer_image(self, size=(300, 200)):
         return self.load_image("screamer", None, size=size)
 
     # --------------------

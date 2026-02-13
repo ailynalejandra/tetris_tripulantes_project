@@ -150,6 +150,12 @@ def show_credits():
         "Copilot y LUIS.P",
         "Editor de textos y diseño:",
         "AILYN.Q",
+        "asistente de edicion",
+        "RAFAEL.C",
+        "Efectos Visuales",
+        "JESUS.P",
+        "asistentes de efectos visuales",
+        "LUIS,RAFAEL y AILYN",
         "Tecnico de audio:",
         "JESUS.P",
         "Inspector de bugs:",
@@ -183,7 +189,9 @@ def show_credits():
 
     # Cargar imágenes con ImageManager
     imagen_final = image_manager.load_credit_image()      # final.png
+    imagen_final = pygame.transform.scale(imagen_final, (300, 200))
     imagen_estatica = image_manager.load_static_image()   # final_static.png
+    imagen_estatica = pygame.transform.scale(imagen_estatica, (300, 200))
 
     while running:
         screen.fill(GameSettings.BLACK)
@@ -201,7 +209,7 @@ def show_credits():
                     desplazamiento + len(creditos)*50
                 ))
 
-            desplazamiento -= 1.5  # velocidad del scroll
+            desplazamiento -= 0.5  # velocidad del scroll
 
             # Cuando todo salió por arriba (texto + imagen)
             limite_scroll = -(len(creditos)*50 + (imagen_final.get_height() if imagen_final else 0))

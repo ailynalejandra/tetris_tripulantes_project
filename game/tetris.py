@@ -41,7 +41,8 @@ def run_game(screen):
         [[1, 1, 0], [0, 1, 1]],    # S
         [[0, 1, 1], [1, 1, 0]]     # Z
     ]
-
+    soft_drop_interval_ms = 80 #velocidad miestars mantienes keydown
+    last_soft_drop_time = 0    #timestamp de la ultima bajada por hold
     
     # --------------------
     # Inicializar gestores
@@ -79,8 +80,8 @@ def run_game(screen):
     input_seq = []
 
     def poner_musica(ruta):
-        """Reproduce música usando SoundManager en lugar de pygame.mixer directo."""
-        # ruta puede ser nombre de archivo dentro de SOUNDS_DIR o None
+        """Reproduce música usando SoundManager."""
+        # ruta puede ser nombre de archivo dentro de SOUNDS_DIR 
         if ruta:
             sound_manager.play_music(ruta)
         else:
@@ -102,7 +103,7 @@ def run_game(screen):
 
         # Si queremos que la imagen especial desaparezca tras unos segundos, podemos usar timer_premio
         timer_premio_inicio = None
-        DURACION_PREMIO_MS = 5000  # si quieres que el premio se muestre solo 5s; si quieres que quede fija, ignora timers
+        DURACION_PREMIO_MS = 6000  # si quieres que el premio se muestre solo 5s; si quieres que quede fija, ignora timers
         WIDTH, HEIGHT = screen.get_size()
         while True:
             screen.fill(NEGRO)
@@ -267,7 +268,7 @@ def run_game(screen):
     game_over = False
     puntaje = 0
     pausa = False
-
+    current_time = pygame.time.get_ticks()
     # --------------------
     # Bucle principal
     # --------------------
@@ -317,6 +318,15 @@ def run_game(screen):
 
                 elif event.key == pygame.K_DOWN:
                     pieza_actual["y"] += 1
+                    last_soft_drop_time = current_time
+                    keys = pygame.key.get_pressed()
+                    if keys[pygame.K_DOWN]:
+                        if current_time - last_soft_drop_time >= soft_drop_interval_ms:
+                            pieza_actual["y"]+= 1
+                            last_soft_drop_time = current_time
+                    else :
+                        last_soft_drop_time = 0
+
                     if colision(tablero, pieza_actual):
                         pieza_actual["y"] -= 1
                     elif soft_drop:

@@ -6,18 +6,18 @@ from game.settings import GameSettings
 class SoundManager:
     def __init__(self, preload=True):
         self.base_dir = Path(GameSettings.SOUNDS_DIR)
-        self.sounds = {}          # cache de efectos: name -> pygame.mixer.Sound | None
+        self.sounds = {}          # cache de efectos cortos: name -> pygame.mixer.Sound | None
         self._music_volume = 0.4
 
         # Mapa por defecto: nombre lógico -> archivo en la carpeta de sonidos
         self.default_map = {
             "rotate": "rotate.flac",
-            "move": "move.mp3",
+            "move": "move.flac",
             "soft_drop": "soft_drop.wav",
-            "line_clear": "line_clear.mp3",
-            "gameover": "gameover.wav",
-            "final_theme": "gameover_theme.mp3",
-            "screamer": "screamer.mp3",
+            "line_clear": "line_clear.flac",
+            "gameover": "gameover.wav",          # efecto corto
+            "final_theme": "gameover_theme.mp3", # música larga
+            "screamer": "screamer.mp3",          # música larga (38s)
             # añade aquí más efectos si los tienes
         }
 
@@ -30,9 +30,9 @@ class SoundManager:
     # --------------------
     # Carga y caché
     # --------------------
-    def load_sound(self, name, filename=None, volume=0.5):
+    def load_sound(self, name, filename=None, volume=0.8):
         """
-        Carga un efecto y lo guarda en caché.
+        Carga un efecto corto y lo guarda en caché.
         - name: clave lógica para referenciar el sonido.
         - filename: si no se pasa, se busca en default_map.
         """
@@ -65,9 +65,8 @@ class SoundManager:
     def load_all_default_sounds(self, volume=0.5):
         """Carga todos los sonidos definidos en default_map a la caché."""
         for name, filename in self.default_map.items():
-            # Para música larga (mp3) no es necesario cargar como Sound; la dejamos para play_music
-            if filename.lower().endswith((".mp3", ".ogg")) and name.endswith("_theme"):
-                # opcional: no cargar como Sound, se reproducen con play_music
+            # Para música larga (mp3/ogg) no se cargan como Sound; se reproducen con play_music
+            if filename.lower().endswith((".mp3",".ogg")) and not name.endswith("over"):
                 self.sounds[name] = None
                 continue
             self.load_sound(name, filename, volume=volume)
@@ -76,10 +75,9 @@ class SoundManager:
     # Reproducción
     # --------------------
     def play_sound(self, name):
-        """Reproduce un efecto ya cargado (o lo carga si no está)."""
+        """Reproduce un efecto corto ya cargado (o lo carga si no está)."""
         sound = self.sounds.get(name)
         if sound is None:
-            # intentar cargar desde default_map si existe
             sound = self.load_sound(name)
         if sound:
             sound.play()
@@ -89,7 +87,7 @@ class SoundManager:
         pygame.mixer.music.set_endevent()
 
     def play_music(self, filename, loop=-1, volume=None):
-        """Reproduce música (archivo en SOUNDS_DIR)."""
+        """Reproduce música larga (archivo en SOUNDS_DIR)."""
         if volume is None:
             volume = self._music_volume
         music_path = self._root_path(filename)
@@ -104,19 +102,22 @@ class SoundManager:
         else:
             print(f"❌ No existe música: {music_path}")
 
-    # Métodos convenientes que usabas
-    def play_menu_music(self, volume=0.4):
+    # --------------------
+    # Métodos específicos
+    # --------------------
+    def play_menu_music(self, volume=0.5):
         self.play_music("menu_theme.mp3", loop=-1, volume=volume)
 
     def play_creditos_music(self, volume=0.5):
         self.play_music("creditos_theme.mp3", loop=-1, volume=volume)
 
     def play_gameover_theme(self, volume=0.1):
+        """Reproduce la música de Game Over (una sola vez)."""
         self.play_music("gameover_theme.mp3", loop=0, volume=volume)
 
-    # Helper específico que pediste
-    def load_screamer_sound(self, volume=0.7):
-        return self.load_sound("screamer", "screamer.mp3", volume=volume)
+    def play_screamer(self, volume=0.8):
+        """Reproduce el screamer como música larga (38s)."""
+        self.play_music("screamer.mp3", loop=0, volume=volume)
     
 
     
