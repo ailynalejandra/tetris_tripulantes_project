@@ -97,7 +97,7 @@ def game_over_menu(screen):
     menu_button    = pygame.Rect(30, 190, 260, 50)
     exit_button    = pygame.Rect(30, 260, 260, 50)
 
-    skip_text = "Presiona F para saltarte la canción y ver el screamer"
+    skip_text = "Presiona F para saltarte la cancion"
 
     while True:
         now = pygame.time.get_ticks()
