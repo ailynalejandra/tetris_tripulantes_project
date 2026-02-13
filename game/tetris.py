@@ -1,7 +1,8 @@
 import pygame
 import random
-import os
 import itertools
+from game.sounds import SoundManager
+from game.images import ImageManager
 
 __version__ = "0.1.0"
 def run_game(screen):
@@ -42,60 +43,31 @@ def run_game(screen):
     ]
 
     
-    # RUTAS (carpeta raíz)
-    
-    BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # ← raíz del proyecto
-    SOUND_DIR = os.path.join(BASE_DIR, "sounds")
-    IMAGE_DIR = os.path.join(BASE_DIR, "images")
+    # --------------------
+    # Inicializar gestores
+    # --------------------
+    sound_manager = SoundManager()
+    image_manager = ImageManager()
 
-    
-    # Audio
-    
-    def load_sound(filename):
-        path = os.path.join(SOUND_DIR, filename)
-        if not os.path.exists(path):
-            print("❌ No existe sound:", path)
-            return None
-        try:
-            return pygame.mixer.Sound(path)
-        except Exception as e:
-            print("❌ Error cargando sound:", filename, e)
-            return None
+    # Música de fondo (usando SoundManager)
+    sound_manager.play_music("tetris_theme.mp3", loop=-1, volume=0.4)
 
-    # Música de fondo
-    tetris_theme = os.path.join(SOUND_DIR, "tetris_theme.mp3")
-    if os.path.exists(tetris_theme):
-        try:
-            pygame.mixer.music.stop()
-            pygame.mixer.music.load(tetris_theme)
-            pygame.mixer.music.set_volume(0.4)
-            pygame.mixer.music.play(-1)
-            print("🎵 Música Tetris OK")
-        except Exception as e:
-            print("❌ Error cargando música:", e)
-    else:
-        print("❌ No existe música:", tetris_theme)
+    # Efectos (se cargan mediante SoundManager)
+    rotate_sound   = sound_manager.load_sound("rotate", "rotate.flac")
+    move_sound     = sound_manager.load_sound("move", "move.mp3")
+    soft_drop      = sound_manager.load_sound("soft_drop", "soft_drop.wav")
+    line_clear     = sound_manager.load_sound("line_clear", "line_clear.mp3")
+    gameover_sound = sound_manager.load_sound("gameover", "gameover.wav")
+    final_theme    = sound_manager.load_sound("final_theme", "gameover_theme.mp3")
 
-    # Efectos
-    rotate_sound   = load_sound("rotate.flac")
-    move_sound     = load_sound("move.mp3")
-    soft_drop      = load_sound("soft_drop.wav")
-    line_clear     = load_sound("line_clear.mp3")
-    gameover_sound = load_sound("gameover.wav")
-    final_theme    = load_sound("gameover_theme.mp3")
+    # Recursos Easter Egg (se cargan mediante ImageManager)
+    secret_image_path = image_manager.load_image("secret", "secret.png")
+    secret_image = secret_image_path  # ImageManager devuelve la Surface o None
 
-    for s in [rotate_sound, move_sound, soft_drop, line_clear, gameover_sound, final_theme]:
-        if s:
-            s.set_volume(0.5)
+    premio_path = image_manager.load_image("premio", "premio.png")
+    premio_image = premio_path  # ImageManager devuelve la Surface o None
 
-    
-    # Recursos Easter Egg
-    
-    secret_image_path = os.path.join(IMAGE_DIR, "secret.png")
-    secret_image = pygame.image.load(secret_image_path).convert() if os.path.exists(secret_image_path) else None
-    premio_path = os.path.join(IMAGE_DIR, "premio.png")
-    premio_image = pygame.image.load(premio_path) if os.path.exists(premio_path) else None
-    musica_secreta = os.path.join(SOUND_DIR, "secret_music.mp3")
+    musica_secreta = "secret_music.mp3"  # se reproduce con sound_manager.play_music()
 
     KONAMI_CODE = [
         pygame.K_UP, pygame.K_UP,
@@ -107,14 +79,13 @@ def run_game(screen):
     input_seq = []
 
     def poner_musica(ruta):
-        if os.path.exists(ruta):
-            try:
-                pygame.mixer.music.stop()
-                pygame.mixer.music.load(ruta)
-                pygame.mixer.music.set_volume(0.4)
-                pygame.mixer.music.play(-1)
-            except Exception as e:
-                print("❌ Error al reproducir música:", e)
+        """Reproduce música usando SoundManager en lugar de pygame.mixer directo."""
+        # ruta puede ser nombre de archivo dentro de SOUNDS_DIR o None
+        if ruta:
+            sound_manager.play_music(ruta)
+        else:
+            # si no se pasa ruta, detener música
+            sound_manager.stop_all_music()
 
     def ejecutar_easter_egg():
         """Pantalla independiente para el Easter Egg con dos fases y contador de F que desbloquea imagen."""
@@ -139,9 +110,8 @@ def run_game(screen):
             if fase == 1:
                 # Imagen secreta y texto dinámico
                 if secret_image:
-                    rect = secret_image.get_rect(center=(screen.get_width()//2, screen.get_height()//2))
-                    rect = pygame.transform.scale(secret_image, (WIDTH, HEIGHT))
-                    screen.blit(rect, (0, 0))
+                    img = pygame.transform.scale(secret_image, (WIDTH, HEIGHT))
+                    screen.blit(img, (0, 0))
                     
 
                 txt = font_grande.render("¡SECRET MODE!", True, next(colors_cycle))
@@ -201,12 +171,12 @@ def run_game(screen):
             # Eventos
             for ev in pygame.event.get():
                 if ev.type == pygame.QUIT:
-                    poner_musica(tetris_theme)
+                    poner_musica("tetris_theme.mp3")
                     return "quit"
                 if ev.type == pygame.KEYDOWN:
                     # En cualquier fase ESC vuelve al juego
                     if ev.key == pygame.K_ESCAPE:
-                        poner_musica(tetris_theme)
+                        poner_musica("tetris_theme.mp3")
                         return "resume"
 
                     if fase == 1:
@@ -217,7 +187,8 @@ def run_game(screen):
                         if ev.key == pygame.K_f:
                             f_counter += 1
                             print(f"Respect paid ({f_counter}/10)")
-                            # efecto visual breve: si quieres reproducir un sonido, puedes hacerlo aquí
+                            # reproducir efecto breve: usar SoundManager
+                            sound_manager.play_sound("rotate")
                             if f_counter >= 10:
                                 mostrar_premio = True
                                 timer_premio_inicio = None  # reiniciar timer para mostrar premio

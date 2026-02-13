@@ -1,9 +1,11 @@
 import pygame
 import sys
 import os
-from game import menu
-from game import tetris
+from game import tetris, menu
+from game.sounds import SoundManager
 from game.settings import GameSettings
+from game.images import ImageManager
+
 # --------------------
 # Inicialización
 # --------------------
@@ -19,7 +21,12 @@ pygame.display.set_caption("Menú Principal - Tetris")
 
 font_title = pygame.font.Font(None, 48)
 font_text  = pygame.font.Font(None, 22)
-font_creditos =pygame.font.Font(None, 22)
+font_creditos = pygame.font.Font(None, 22)
+
+#imagesmanager
+image_manager = ImageManager()
+# Soundmanager
+sound_manager = SoundManager()
 
 def draw_text(text, font, color, surface, x, y):
     textobj = font.render(text, True, color)
@@ -49,26 +56,6 @@ def show_instructions():
 
         pygame.display.flip()
 
-
-# --------------------
-# Música del menú
-# --------------------
-def get_root_path(*paths):
-    base = os.path.dirname(os.path.dirname(__file__))
-    return os.path.join(base, *paths)
-
-def play_menu_music():
-    menu_music = get_root_path("sounds", "menu_theme.mp3")
-    if os.path.exists(menu_music):
-        pygame.mixer.music.stop()
-        try:
-            pygame.mixer.music.unload()
-        except:
-            pass
-        pygame.mixer.music.load(menu_music)
-        pygame.mixer.music.play(-1)
-        pygame.mixer.music.set_volume(0.4)
-
 # --------------------
 # Loop del juego
 # --------------------
@@ -84,22 +71,17 @@ def start_game_loop():
             action = menu.game_over_menu(screen)
 
             if action == "reiniciar":
-                menu.stop_all_music()
-                pygame.mixer.music.stop()
-                pygame.mixer.stop()
-                try:
-                    pygame.mixer.music.unload()
-                except:
-                    pass
+                # detener cualquier música antes de reiniciar
+                sound_manager.stop_all_music()
                 continue
 
             if action == "menu_principal":
-                menu.stop_all_music()
-                play_menu_music()
+                sound_manager.stop_all_music()
+                sound_manager.play_menu_music()
                 return
 
             if action == "salir":
-                menu.stop_all_music()
+                sound_manager.stop_all_music()
                 pygame.quit()
                 sys.exit()
 
@@ -107,7 +89,7 @@ def start_game_loop():
 # Menú Principal
 # --------------------
 def main_menu():
-    play_menu_music()
+    sound_manager.play_menu_music()
 
     while True:
         screen.fill(GameSettings.BLACK)
@@ -135,11 +117,7 @@ def main_menu():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if start_button.collidepoint(event.pos):
-                    pygame.mixer.music.stop()
-                    try:
-                        pygame.mixer.music.unload()
-                    except:
-                        pass
+                    sound_manager.stop_all_music()
                     start_game_loop()
 
                 elif instr_button.collidepoint(event.pos):
@@ -154,22 +132,12 @@ def main_menu():
 
         pygame.display.flip()
 
-if __name__ == "__main__":
-    main_menu()
-
+# --------------------
+# Créditos
+# --------------------
 def show_credits():
-    # Apagar música del menú y reproducir la de créditos
-    pygame.mixer.music.stop()
-    try:
-        pygame.mixer.music.unload()
-    except:
-        pass
-
-    creditos_music = get_root_path("sounds", "creditos_theme.mp3")
-    if os.path.exists(creditos_music):
-        pygame.mixer.music.load(creditos_music)
-        pygame.mixer.music.play(-1)
-        pygame.mixer.music.set_volume(0.5)
+    # Reproducir música de créditos
+    sound_manager.play_creditos_music()
 
     # Lista de créditos
     creditos = [
@@ -180,16 +148,14 @@ def show_credits():
         "JESUS.P",
         "Asistentes de programacion:",
         "Copilot y LUIS.P",
-        "Editor de textos y diseno:",
+        "Editor de textos y diseño:",
         "AILYN.Q",
         "Tecnico de audio:",
         "JESUS.P",
         "Inspector de bugs:",
-        "RAFAEL.C(GUAIDO)",
-        "tecnico en relajacion:",
-        "RAFAEL.C(GUAIDO)",
+        "RAFAEL.C",
         "Agradecimientos especiales a :",
-        "Holomante don FERNANDO BAUTE",
+        "Halomante don FERNANDO BAUTE",
         "que nos instruyo en este",
         "fantastico mundo de la",
         "programacion motivandonos a",
@@ -215,21 +181,9 @@ def show_credits():
     font_creditos = pygame.font.Font(None, 28)
     font_final    = pygame.font.Font(None, 38)
 
-    # Imagen que sube junto con los créditos
-    imagen_final_path = get_root_path("images", "final.png")
-    if os.path.exists(imagen_final_path):
-        imagen_final = pygame.image.load(imagen_final_path)
-        imagen_final = pygame.transform.scale(imagen_final, (300, 200))
-    else:
-        imagen_final = None
-
-    # Imagen para la pantalla final estática
-    imagen_estatica_path = get_root_path("images", "final_static.png")
-    if os.path.exists(imagen_estatica_path):
-        imagen_estatica = pygame.image.load(imagen_estatica_path)
-        imagen_estatica = pygame.transform.scale(imagen_estatica, (300, 200))
-    else:
-        imagen_estatica = None
+    # Cargar imágenes con ImageManager
+    imagen_final = image_manager.load_credit_image()      # final.png
+    imagen_estatica = image_manager.load_static_image()   # final_static.png
 
     while running:
         screen.fill(GameSettings.BLACK)
@@ -240,15 +194,18 @@ def show_credits():
                 texto = font_creditos.render(linea, True, GameSettings.WHITE)
                 screen.blit(texto, (WIDTH//2 - texto.get_width()//2, desplazamiento + i*50))
 
-            # Dibujar la imagen como si fuera la última "línea"
+            # Dibujar la imagen final.png como si fuera la última "línea"
             if imagen_final:
-                screen.blit(imagen_final, (WIDTH//2 - imagen_final.get_width()//2,
-                                           desplazamiento + len(creditos)*50))
+                screen.blit(imagen_final, (
+                    WIDTH//2 - imagen_final.get_width()//2,
+                    desplazamiento + len(creditos)*50
+                ))
 
-            desplazamiento -= 0.5 #ajustar velocidad de los creditos 
+            desplazamiento -= 1.5  # velocidad del scroll
 
             # Cuando todo salió por arriba (texto + imagen)
-            if desplazamiento < -(len(creditos)*50 + (imagen_final.get_height() if imagen_final else 0)):
+            limite_scroll = -(len(creditos)*50 + (imagen_final.get_height() if imagen_final else 0))
+            if desplazamiento < limite_scroll:
                 mostrar_final = True
 
         else:
@@ -263,23 +220,23 @@ def show_credits():
                 rect_texto = texto.get_rect(center=(WIDTH//2, HEIGHT//2 - 150 + i*50))
                 screen.blit(texto, rect_texto)
 
-            # Imagen debajo del bloque de texto
+            # Imagen final_static.png debajo del bloque de texto
             if imagen_estatica:
                 rect_img = imagen_estatica.get_rect(center=(WIDTH//2, HEIGHT//2 + 200))
                 screen.blit(imagen_estatica, rect_img)
 
+        # Eventos
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                pygame.mixer.music.stop()
-                try:
-                    pygame.mixer.music.unload()
-                except:
-                    pass
-                play_menu_music()
+                sound_manager.stop_all_music()
+                sound_manager.play_menu_music()
                 running = False
 
         pygame.display.flip()
         reloj.tick(60)
+
+if __name__ == "__main__":
+    main_menu()

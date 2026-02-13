@@ -1,6 +1,11 @@
 import pygame
 import sys
 import os
+from game.sounds import SoundManager
+from game.images import ImageManager
+
+sound_manager = SoundManager()
+Image_manager = ImageManager()
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -12,18 +17,7 @@ def draw_text(text, font, color, surface, x, y):
     textrect = textobj.get_rect(center=(x, y))
     surface.blit(textobj, textrect)
 
-def _root_path(*paths):
-    base = os.path.dirname(os.path.dirname(__file__))  # sale de /game/ a raíz
-    return os.path.join(base, *paths)
 
-def stop_all_music():
-    """Detiene música y limpia eventos."""
-    pygame.mixer.music.stop()
-    try:
-        pygame.mixer.music.unload()
-    except:
-        pass
-    pygame.mixer.music.set_endevent()  # limpia evento MUSIC_END
 
 def game_over_menu(screen):
     if not pygame.font.get_init():
@@ -31,85 +25,89 @@ def game_over_menu(screen):
 
     font = pygame.font.Font(None, 48)
 
-    MUSIC_END = pygame.USEREVENT + 1
-    pygame.mixer.music.set_endevent(MUSIC_END)
+    SCREAMER_TIMEOUT = pygame.USEREVENT + 1
 
-    gameover_theme_path = _root_path("sounds", "gameover_theme.mp3")
-    screamer_sound_path = _root_path("sounds", "screamer.mp3")
-    screamer_img_path   = _root_path("images", "screamer.png")
+    screamer_img_path = _root_path("images", "screamer.png")
 
     # Música Game Over
-    if os.path.exists(gameover_theme_path):
-        
-        pygame.mixer.music.load(gameover_theme_path)
-        pygame.mixer.music.play(0)
-        pygame.mixer.music.set_volume(0.3)
-
-    screamer_sound = None
-    if os.path.exists(screamer_sound_path):
-        screamer_sound = pygame.mixer.Sound(screamer_sound_path)
+    sound_manager.play_gameover_theme()
+    # Sonido Screamer
+    screamer_sound = sound_manager.load_screamer_sound()
 
     WIDTH, HEIGHT = screen.get_size()
     screamer_shown = False
+    screamer_active = False
 
     while True:
-        screen.fill(BLACK)
-        draw_text("GAME OVER", font, WHITE, screen, WIDTH // 2, 60)
-
-        restart_button = pygame.Rect(100, 120, 200, 50)
-        menu_button    = pygame.Rect(100, 190, 200, 50)
-        exit_button    = pygame.Rect(100, 260, 200, 50)
-
-        pygame.draw.rect(screen, BLUE, restart_button)
-        pygame.draw.rect(screen, BLUE, menu_button)
-        pygame.draw.rect(screen, BLUE, exit_button)
-
-        draw_text("Reiniciar", font, WHITE, screen, WIDTH // 2, 145)
-        draw_text("Menú Principal", font, WHITE, screen, WIDTH // 2, 215)
-        draw_text("Salir", font, WHITE, screen, WIDTH // 2, 285)
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                stop_all_music()
+                sound_manager.stop_all_music()
                 pygame.quit()
                 sys.exit()
 
-            elif event.type == MUSIC_END and not screamer_shown:
+            # Cuando la música termina, mostramos el screamer
+            if not pygame.mixer.music.get_busy() and not screamer_shown:
                 if os.path.exists(screamer_img_path):
                     img = pygame.image.load(screamer_img_path).convert()
                     img = pygame.transform.scale(img, (WIDTH, HEIGHT))
                     screen.blit(img, (0, 0))
                     pygame.display.flip()
+                    screamer_active = True
 
                 if screamer_sound:
                     screamer_sound.play()
 
-                pygame.time.wait(10000)  # 10 segundos
+                # Lanzamos un temporizador de 10 segundos
+                pygame.time.set_timer(SCREAMER_TIMEOUT, 10000)
                 screamer_shown = True
 
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == SCREAMER_TIMEOUT:
+                pygame.time.set_timer(SCREAMER_TIMEOUT, 0)  # detener el timer
+                screamer_active = False
+                if screamer_sound:
+                    screamer_sound.stop()
+                sound_manager.stop_all_music()
+                pygame.mixer.stop()
+                return "menu_principal"
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and not screamer_active:
                 if restart_button.collidepoint(event.pos):
                     if screamer_sound:
                         screamer_sound.stop()
-                    stop_all_music()   # 🔥 detiene el gameover_theme
-                    pygame.mixer.music.stop()
+                    sound_manager.stop_all_music()
                     pygame.mixer.stop()
                     return "reiniciar"
 
                 if menu_button.collidepoint(event.pos):
                     if screamer_sound:
                         screamer_sound.stop()
-                    stop_all_music()
-                    pygame.mixer.music.stop()
+                    sound_manager.stop_all_music()
                     pygame.mixer.stop()
                     return "menu_principal"
 
                 if exit_button.collidepoint(event.pos):
                     if screamer_sound:
                         screamer_sound.stop()
-                    stop_all_music()
+                    sound_manager.stop_all_music()
                     pygame.quit()
                     sys.exit()
+
+        # Si no está activo el screamer, dibujamos el menú normal
+        if not screamer_active:
+            screen.fill(BLACK)
+            draw_text("GAME OVER", font, WHITE, screen, WIDTH // 2, 60)
+
+            restart_button = pygame.Rect(30, 120, 260, 50)
+            menu_button    = pygame.Rect(30, 190, 260, 50)
+            exit_button    = pygame.Rect(30, 260, 260, 50)
+
+            pygame.draw.rect(screen, BLUE, restart_button)
+            pygame.draw.rect(screen, BLUE, menu_button)
+            pygame.draw.rect(screen, BLUE, exit_button)
+
+            draw_text("Reiniciar", font, WHITE, screen, WIDTH // 2, 145)
+            draw_text("Menú Principal", font, WHITE, screen, WIDTH // 2, 215)
+            draw_text("Salir", font, WHITE, screen, WIDTH // 2, 285)
 
         pygame.display.flip()
         clock.tick(60)
