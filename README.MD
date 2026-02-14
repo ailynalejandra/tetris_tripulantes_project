@@ -25,6 +25,7 @@ Este proyecto busca ser modular, claro y fácil de mantener, con separación de 
 
 `
 tetris-main/
+
 ├── assets/                  # Recursos del juego
 
 │   ├── images/              # Imágenes, sprites, fondos
