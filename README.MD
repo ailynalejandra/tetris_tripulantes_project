@@ -26,20 +26,35 @@ Este proyecto busca ser modular, claro y fácil de mantener, con separación de 
 `
 tetris-main/
 ├── assets/                  # Recursos del juego
+
 │   ├── images/              # Imágenes, sprites, fondos
+
 │   └── sounds/              # Música y efectos de sonido
+
 ├── game/                    # Código fuente del juego
+
 │   ├── settings/            # Configuración del juego
+
 │   │   └── game_settings.py # Constantes y parámetros
+
 │   ├── images.py            # Manejo de recursos gráficos
+
 │   ├── sounds.py            # Manejo de sonidos
+
 │   ├── menu.py              # Lógica del menú
+
 │   ├── tetris.py            # Lógica principal del Tetris
+
 │   └── main.py              # Loop principal
+
 ├── run.py                   # Punto de entrada para ejecutar el juego
+
 ├── versión.py               # Archivo con la versión del proyecto
+
 ├── bumpver                  # Configuración de versionado automático
+
 ├── .gitignore               # Exclusiones para Git
+
 └── venv/                    # Entorno virtual de Python
 `
 
