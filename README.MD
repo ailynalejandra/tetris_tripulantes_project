@@ -5,12 +5,15 @@ En un mundo digital donde las piezas del Tetris no son simples bloques, sino fra
 Pero ese equilibrio está amenazado…  
 
 👑 El Halomante
+
 El Halomante es un hechicero olvidado, maestro de los halos de energía que rodean el universo. En su ambición, intentó controlar el flujo de las piezas cósmicas, pero fue desterrado al Vacío del Caos. Ahora ha regresado, corrompiendo los tetrominos y enviándolos en formas cada vez más veloces y caóticas para romper el Muro del Orden.  
 
 Su objetivo: colapsar la realidad en un torbellino eterno de piezas descontroladas.  
 
 🧩 El jugador
+
 Tú eres el Arquitecto del Orden, el último guardián capaz de manipular los fragmentos cósmicos. Cada línea que completas es un golpe contra el Halomante, debilitando su poder. Pero cuidado: si las piezas alcanzan la cima del tablero, el Halomante habrá ganado y el mundo caerá bajo su dominio.
+
 🎮 Tetris
 
 Un juego clásico de Tetris desarrollado en Python con Pygame.  
