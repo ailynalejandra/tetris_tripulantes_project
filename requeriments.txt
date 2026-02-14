@@ -1,0 +1,2 @@
+pygame_ce>=2.5.0
+bumpver>=2023.1120
